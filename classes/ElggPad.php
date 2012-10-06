@@ -80,17 +80,24 @@ class ElggPad extends ElggObject {
 	
 	protected function startSession(){
 		if($this->container_guid) {
-			$container_guid = $this->container_guid;
+			$container = get_entity($this->container_guid);
 		} else {
-			$container_guid = elgg_get_logged_in_user_guid();
-		}		
+			$container = elgg_get_logged_in_user_entity();
+		}
+
 		//Etherpad: Create an etherpad group for the elgg container
-		$mappedGroup = $this->get_pad_client()->createGroupIfNotExistsFor($container_guid); 
-		$this->groupID = $mappedGroup->groupID;
+		if (!isset($container->etherpad_group_id)) {
+			$mappedGroup = $this->get_pad_client()->createGroupIfNotExistsFor($container->guid); 
+			$container->etherpad_group_id = $mappedGroup->groupID;
+		}
+		$this->groupID = $container->etherpad_group_id;
 
 		//Etherpad: Create an author(etherpad user) for logged in user
-		$author = $this->get_pad_client()->createAuthorIfNotExistsFor(elgg_get_logged_in_user_entity()->username);
-		$this->authorID = $author->authorID;
+		if (!isset($container->etherpad_author_id)) {
+			$author = $this->get_pad_client()->createAuthorIfNotExistsFor(elgg_get_logged_in_user_entity()->username);
+			$user->etherpad_author_id = $author->authorID;
+		}
+		$this->authorID = $user->etherpad_author_id;
 
 		//Etherpad: Create session
 		$validUntil = mktime(date("H"), date("i")+5, 0, date("m"), date("d"), date("y")); // 5 minutes in the future
