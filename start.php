@@ -62,8 +62,15 @@ function etherpad_init() {
 		elgg_register_entity_url_handler('object', 'etherpad', 'pages_url');
 		elgg_register_entity_url_handler('object', 'subpad', 'pages_url');
 	}
+	elgg_register_event_handler('upgrade', 'system', 'etherpad_run_upgrades');
 }
 
+function etherpad_run_upgrades() {
+	if (include_once(elgg_get_plugins_path() . 'upgrade-tools/lib/upgrade_tools.php')) {
+		upgrade_module_run('etherpad');
+	}
+
+}
 
 function etherpad_page_handler($page, $handler) {
 	
