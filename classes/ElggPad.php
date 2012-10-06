@@ -79,18 +79,33 @@ class ElggPad extends ElggObject {
 	}
 	
 	protected function startSession(){
-		if($this->container_guid) {
-			$container_guid = $this->container_guid;
+		if (isset($this->container_guid)) {
+			$container = get_entity($this->container_guid);
 		} else {
-			$container_guid = elgg_get_logged_in_user_guid();
-		}		
+			$container = elgg_get_logged_in_user_entity();
+		}
+
+		if (isset($this->owner_guid)) {
+			$user = get_entity($this->owner_guid);
+		} else {
+			$user = elgg_get_logged_in_user_entity();
+		}
+
+		$site_mask = preg_replace('^https?://', '@', elgg_get_site_url());
+
 		//Etherpad: Create an etherpad group for the elgg container
-		$mappedGroup = $this->get_pad_client()->createGroupIfNotExistsFor($container_guid); 
-		$this->groupID = $mappedGroup->groupID;
+		if (!isset($container->etherpad_group_id)) {
+			$mappedGroup = $this->get_pad_client()->createGroupIfNotExistsFor($container->guid . $site_mask); 
+			$container->etherpad_group_id = $mappedGroup->groupID;
+		}
+		$this->groupID = $container->etherpad_group_id;
 
 		//Etherpad: Create an author(etherpad user) for logged in user
-		$author = $this->get_pad_client()->createAuthorIfNotExistsFor(elgg_get_logged_in_user_entity()->username);
-		$this->authorID = $author->authorID;
+		if (!isset($container->etherpad_author_id)) {
+			$author = $this->get_pad_client()->createAuthorIfNotExistsFor(elgg_get_logged_in_user_entity()->username . $site_mask);
+			$user->etherpad_author_id = $author->authorID;
+		}
+		$this->authorID = $user->etherpad_author_id;
 
 		//Etherpad: Create session
 		$validUntil = mktime(date("H"), date("i")+5, 0, date("m"), date("d"), date("y")); // 5 minutes in the future
