@@ -1,9 +1,4 @@
 <?php
-/**
- * Move text of first annotation to group forum topic object and delete annotation
- *
- * First determine if the upgrade is needed and then if needed, batch the update
- */
 
 $options = array(
         'type' => 'object',
@@ -110,7 +105,13 @@ if ($batch->callbackResult) {
 }
 
 // pads
-$options['limit'] = 0;
+$options = array(
+        'type' => 'object',
+        'subtypes' => array('page', 'page_top'),
+        'limit' => 0,
+        'metadata_name' => 'ispad',
+        'metadata_value' => 1,
+);
 
 $previous_access = elgg_set_ignore_access(true);
 $batch = new ElggBatch('elgg_get_entities_from_metadata', $options, "etherpad_pad_2012100501", 100);
