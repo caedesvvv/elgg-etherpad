@@ -7,8 +7,8 @@
 class ElggPad extends ElggObject {
 	
 	protected $pad;
-	protected $groupID;
-	protected $authorID;
+	public $groupID;
+	public $authorID;
 	
 	/**
 	 * Initialise the attributes array to include the type,
@@ -64,7 +64,7 @@ class ElggPad extends ElggObject {
 		return parent::delete();
 	}
 	
-	protected function get_pad_client(){
+	function get_pad_client(){
 		if($this->pad){
 			return $this->pad;
 		}
@@ -78,7 +78,7 @@ class ElggPad extends ElggObject {
 		return $this->pad;
 	}
 	
-	protected function startSession(){
+	function startSession(){
 		if (isset($this->container_guid)) {
 			$container = get_entity($this->container_guid);
 		} else {
@@ -91,22 +91,25 @@ class ElggPad extends ElggObject {
 			$user = elgg_get_logged_in_user_entity();
 		}
 
-		$site_mask = preg_replace('^https?://', '@', elgg_get_site_url());
+		//$site_mask = preg_replace('https?://', '@', elgg_get_site_url());
+		$site_mask = str_replace('http://', '@', elgg_get_site_url());
+		$site_mask = str_replace('https://', '@', $site_mask);
 
 		//Etherpad: Create an etherpad group for the elgg container
-		if (!isset($container->etherpad_group_id)) {
+	//	if (!isset($container->etherpad_group_id)) {
 			$mappedGroup = $this->get_pad_client()->createGroupIfNotExistsFor($container->guid . $site_mask); 
 			$container->etherpad_group_id = $mappedGroup->groupID;
-		}
+	//	}
 		$this->groupID = $container->etherpad_group_id;
 
 		//Etherpad: Create an author(etherpad user) for logged in user
-		if (!isset($container->etherpad_author_id)) {
-			$author = $this->get_pad_client()->createAuthorIfNotExistsFor(elgg_get_logged_in_user_entity()->username . $site_mask);
+		//if (!isset($user->etherpad_author_id)) {
+			$author = $this->get_pad_client()->createAuthorIfNotExistsFor($user->username . $site_mask);
 			$user->etherpad_author_id = $author->authorID;
-		}
+	//	}
 		$this->authorID = $user->etherpad_author_id;
 
+		//error_log("e $this->groupID $this->authorID");
 		//Etherpad: Create session
 		$validUntil = mktime(date("H"), date("i")+5, 0, date("m"), date("d"), date("y")); // 5 minutes in the future
 		$session = $this->get_pad_client()->createSession($this->groupID, $this->authorID, $validUntil);
